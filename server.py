@@ -39,18 +39,16 @@ def list_items() -> list[PantryItem]:
 
 
 @mcp.tool()
-def add_item(name: str, amount: int) -> bool:
+def add_item(item: PantryItem) -> bool:
     """Add an item to the pantry database"""
     ctx = mcp.get_context()
     db = ctx.request_context.lifespan_context.db
-    item = PantryItem(name=name, amount=amount)
     return db.add_item(item=item)
 
 
 @mcp.tool()
-def remove_item(name: str, amount: int) -> bool:
+def remove_item(item: PantryItem) -> bool:
     """Remove an item from pantry database"""
     ctx = mcp.get_context()
     db = ctx.request_context.lifespan_context.db
-    item = PantryItem(name=name, amount=amount)
     return db.remove_item(item=item)

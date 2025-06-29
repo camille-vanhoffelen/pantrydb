@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 class PantryItem(BaseModel):
     """Pydantic model for pantry items."""
     
-    name: str = Field(..., description="Name of the pantry item")
+    name: str = Field(..., description="Name of the pantry item, in singular form, e.g 'banana'")
     amount: int = Field(..., description="Amount of the item")
 
     @field_validator('name')
