@@ -1,12 +1,15 @@
 # Item models for pantrydb
-from uuid import uuid4
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PantryItem(BaseModel):
     """Pydantic model for pantry items."""
     
-    uuid: str = Field(default_factory=lambda: str(uuid4()), description="Unique identifier for the item")
     name: str = Field(..., description="Name of the pantry item")
     amount: int = Field(..., description="Amount of the item")
+
+    @field_validator('name')
+    @classmethod
+    def normalize_name(cls, v: str) -> str:
+        """Normalize the name field to lowercase and stripped."""
+        return v.lower().strip()

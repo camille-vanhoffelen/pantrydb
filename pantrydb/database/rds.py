@@ -1,10 +1,11 @@
 # RDS database implementation for pantrydb
-from typing import List, Optional
+from typing import List
 
 from pantrydb.database.abstract import PantryDatabase
 from pantrydb.items import PantryItem
 
 
+# TODO implement RDS backend
 class RDSPantryDatabase(PantryDatabase):
     """RDS implementation of the Database abstract class."""
 
@@ -26,14 +27,6 @@ class RDSPantryDatabase(PantryDatabase):
         """Add an item to the database."""
         raise NotImplementedError("RDS implementation not yet implemented")
     
-    def delete_item(self, item_id: str) -> bool:
-        """Delete an item from the database by its UUID."""
-        raise NotImplementedError("RDS implementation not yet implemented")
-    
-    def search_item(self, name: str) -> Optional[PantryItem]:
-        """Find an item in the database by its name using string similarity."""
-        raise NotImplementedError("RDS implementation not yet implemented")
-    
-    def decrease_item_amount(self, item_id: str, amount: int) -> bool:
-        """Decrease the amount of an item in the database."""
+    def remove_item(self, item: PantryItem) -> bool:
+        """Remove an item from the database."""
         raise NotImplementedError("RDS implementation not yet implemented")
