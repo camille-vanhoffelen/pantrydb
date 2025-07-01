@@ -27,6 +27,7 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
         await db.disconnect()
 
 
+# TODO OAuth
 mcp = FastMCP("PantryDB", lifespan=app_lifespan)
 
 
