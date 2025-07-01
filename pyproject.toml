@@ -8,4 +8,5 @@ dependencies = [
     "mcp[cli]>=1.9.4",
     "sqlalchemy",
     "alembic>=1.16.2",
+    "psycopg2>=2.9.10",
 ]
