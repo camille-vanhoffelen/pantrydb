@@ -42,12 +42,10 @@ class DBPantryItem(Base):
         return PantryItem(name=self.name, amount=self.amount)
 
 
-class RDSPantryDatabase(PantryDatabase):
-    """RDS implementation of the Database abstract class using SQLAlchemy and databases (asyncpg driver)."""
+class PostgresPantryDatabase(PantryDatabase):
 
     @classmethod
-    def from_env_vars(cls) -> "RDSPantryDatabase":
-        """Create a RDSPantryDatabase instance from environment variables."""
+    def from_env_vars(cls) -> "PostgresPantryDatabase":
         return cls()
 
     def __init__(self):
@@ -85,8 +83,10 @@ class RDSPantryDatabase(PantryDatabase):
                 result = session.execute(stmt).scalar_one_or_none()
                 if not result:
                     return False
+                if result.amount < item.amount:
+                    return False
                 result.amount -= item.amount
-                if result.amount <= 0:
+                if result.amount == 0:
                     session.delete(result)
                 else:
                     session.add(result)

@@ -42,13 +42,19 @@ class LocalPantryDatabase(PantryDatabase):
                 return False
 
             current_item = self._items[item.name]
+
             remaining_amount = current_item.amount - item.amount
 
-            # If consuming more than available, remove item entirely
-            if remaining_amount <= 0:
+            # If consuming more than available, fail
+            if item.amount > current_item.amount:
+                return False
+
+            # If consuming all, remove item entirely
+            if remaining_amount == 0:
                 del self._items[item.name]
                 return True
 
+            # If consuming some, update item amount
             updated_item = PantryItem(name=current_item.name, amount=remaining_amount)
             self._items[item.name] = updated_item
             return True

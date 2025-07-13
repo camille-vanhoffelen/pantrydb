@@ -6,6 +6,7 @@ class PantryItem(BaseModel):
     """Pydantic model for pantry items."""
     
     name: str = Field(..., description="Name of the pantry item, in singular form, e.g 'banana'")
+    # TODO consider changing amount to units, so it's more integer like (e.g for butter?)
     amount: int = Field(..., description="Amount of the item")
 
     @field_validator('name')
