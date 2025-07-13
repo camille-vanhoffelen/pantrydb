@@ -4,16 +4,14 @@ from typing import Union
 
 from pantrydb.database.dynamo import DynamoPantryDatabase
 from pantrydb.database.local import LocalPantryDatabase
-from pantrydb.database.postgres import PostgresPantryDatabase
 
 
-def create_database_from_env_vars() -> Union[LocalPantryDatabase, PostgresPantryDatabase, DynamoPantryDatabase]:
+def create_database_from_env_vars() -> Union[LocalPantryDatabase, DynamoPantryDatabase]:
     """
     Create a database instance based on the DATABASE_TYPE environment variable.
     
     Returns:
         LocalPantryDatabase if DATABASE_TYPE=local
-        PostgresPantryDatabase if DATABASE_TYPE=postgres
         DynamoPantryDatabase if DATABASE_TYPE=dynamo
         
     Raises:
@@ -23,12 +21,10 @@ def create_database_from_env_vars() -> Union[LocalPantryDatabase, PostgresPantry
     
     if database_type == "local":
         return LocalPantryDatabase.from_env_vars()
-    elif database_type == "postgres":
-        return PostgresPantryDatabase.from_env_vars()
     elif database_type == "dynamo":
         return DynamoPantryDatabase.from_env_vars()
     else:
         raise ValueError(
             f"Invalid DATABASE_TYPE: '{database_type}'. "
-            "Must be either 'local', 'postgres', or 'dynamo'"
+            "Must be either 'local' or 'dynamo'"
         )
