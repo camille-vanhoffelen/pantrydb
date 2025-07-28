@@ -4,17 +4,17 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "my-mcp-server-github-auth",
+	"name": "pantrydb",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	"vars": {
-		"GITHUB_CLIENT_ID": "1234567890",
-		"GITHUB_CLIENT_SECRET": "1234567890",
-		"COOKIE_ENCRYPTION_KEY": "1234567890"
-	},
+	// "vars": {
+		// "GITHUB_CLIENT_ID": "1234567890",
+		// "GITHUB_CLIENT_SECRET": "1234567890",
+		// "COOKIE_ENCRYPTION_KEY": "1234567890"
+	// },
 	"migrations": [
 		{
 			"new_sqlite_classes": [
@@ -34,7 +34,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_KV",
-			"id": "<Add-KV-ID>"
+			"id": "2d392f164a5848d7a6b3092b0d88bfef"
 		}
 	],
 	"ai": {

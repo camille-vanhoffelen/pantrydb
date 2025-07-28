@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 		GITHUB_CLIENT_ID: "1234567890";
 		GITHUB_CLIENT_SECRET: "1234567890";
 		COOKIE_ENCRYPTION_KEY: "1234567890";
+        ALLOWED_GITHUB_USERNAME: "my-github-username";
 		MCP_OBJECT: DurableObjectNamespace<import("./src/index").MyMCP>;
 		AI: Ai;
 	}

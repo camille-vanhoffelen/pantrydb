@@ -36,6 +36,7 @@ Create a new [GitHub OAuth App](https://docs.github.com/en/apps/oauth-apps/build
 wrangler secret put GITHUB_CLIENT_ID
 wrangler secret put GITHUB_CLIENT_SECRET
 wrangler secret put COOKIE_ENCRYPTION_KEY # add any random string here e.g. openssl rand -hex 32
+wrangler secret put ALLOWED_GITHUB_USERNAME
 ```
 #### Set up a KV namespace
 - Create the KV namespace: 
@@ -111,6 +112,13 @@ Run the server locally to make it available at `http://localhost:8788`
 To test the local server, enter `http://localhost:8788/sse` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools". 
 
 #### Using Claude and other MCP Clients
+
+TODO
+
+```
+NAME=PantryDB
+URL=https://pantrydb.<your-subdomain>.workers.dev/sse
+```
 
 When using Claude to connect to your remote MCP server, you may see some error messages. This is because Claude Desktop doesn't yet support remote MCP servers, so it sometimes gets confused. To verify whether the MCP server is connected, hover over the 🔨 icon in the bottom right corner of Claude's interface. You should see your tools available there.
 

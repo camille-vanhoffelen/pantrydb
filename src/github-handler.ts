@@ -27,9 +27,9 @@ app.get("/authorize", async (c) => {
 	return renderApprovalDialog(c.req.raw, {
 		client: await c.env.OAUTH_PROVIDER.lookupClient(clientId),
 		server: {
-			description: "This is a demo MCP Remote Server using GitHub for authentication.",
+			description: "MCP Server to keep track of what's in your pantry. Uses GitHub social for authentication.",
 			logo: "https://avatars.githubusercontent.com/u/314135?s=200&v=4",
-			name: "Cloudflare GitHub MCP Server", // optional
+			name: "PantryDB MCP Server", // optional
 		},
 		state: { oauthReqInfo }, // arbitrary data that flows through the form submission below
 	});
@@ -93,6 +93,15 @@ app.get("/callback", async (c) => {
 	// Fetch the user info from GitHub
 	const user = await new Octokit({ auth: accessToken }).rest.users.getAuthenticated();
 	const { login, name, email } = user.data;
+
+	// Check if the authenticated user is allowed 
+	const allowedUsername = env.ALLOWED_GITHUB_USERNAME;
+	if (!allowedUsername) {
+		return c.text("Access denied: Server is not configured with allowed users", 403);
+	}
+	if (login !== allowedUsername) {
+		return c.text("Access denied: Only authorized users can authenticate to this server", 403);
+	}
 
 	// Return back to the MCP client a new token
 	const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({
