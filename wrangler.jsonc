@@ -10,11 +10,9 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	// "vars": {
-		// "GITHUB_CLIENT_ID": "1234567890",
-		// "GITHUB_CLIENT_SECRET": "1234567890",
-		// "COOKIE_ENCRYPTION_KEY": "1234567890"
-	// },
+	"vars": {
+		"ALLOWED_GITHUB_USERNAME": "camille-vanhoffelen",
+	},
 	"migrations": [
 		{
 			"new_sqlite_classes": [
@@ -31,6 +29,13 @@
 			}
 		]
 	},
+	"d1_databases": [
+		{
+		"binding": "DB",
+		"database_name": "pantrydb",
+		"database_id": "8642bd8b-5ee7-4898-9a04-804919908c74"
+		}
+	],
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_KV",

@@ -4,6 +4,10 @@ MCP server to keep track of what's in your pantry.
 
 ---
 
+`npx wrangler kv namespace create PANTRY_ITEMS`
+
+---
+
 # Model Context Protocol (MCP) Server + Github OAuth
 
 This is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that supports remote MCP connections, with Github OAuth built-in.
@@ -107,7 +111,7 @@ GITHUB_CLIENT_SECRET=your_development_github_client_secret
 
 #### Develop & Test
 Run the server locally to make it available at `http://localhost:8788`
-`wrangler dev`
+`npx wrangler dev`
 
 To test the local server, enter `http://localhost:8788/sse` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools". 
 

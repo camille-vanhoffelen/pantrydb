@@ -1,7 +1,6 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
-import { Octokit } from "octokit";
 import { z } from "zod";
 import { GitHubHandler } from "./github-handler";
 
@@ -14,39 +13,23 @@ type Props = {
 	accessToken: string;
 };
 
-const ALLOWED_USERNAMES = new Set<string>([
-	// Add GitHub usernames of users who should have access to the image generation tool
-	// For example: 'yourusername', 'coworkerusername'
-]);
-
 export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
 	server = new McpServer({
-		name: "Github OAuth Proxy Demo",
+		name: "PantryDB MCP Server",
 		version: "1.0.0",
 	});
 
 	async init() {
-		// Hello, world!
 		this.server.tool(
-			"add",
-			"Add two numbers the way only MCP can",
-			{ a: z.number(), b: z.number() },
-			async ({ a, b }) => ({
-				content: [{ text: String(a + b), type: "text" }],
-			}),
-		);
-
-		// Use the upstream access token to facilitate tools
-		this.server.tool(
-			"userInfoOctokit",
-			"Get user info from GitHub, via Octokit",
+			"listPantryItems",
+			"List all items in the pantry",
 			{},
 			async () => {
-				const octokit = new Octokit({ auth: this.props.accessToken });
+				const result = await this.env.DB.prepare("SELECT ItemName, ItemAmount FROM PantryItems").all();
 				return {
 					content: [
 						{
-							text: JSON.stringify(await octokit.rest.users.getAuthenticated()),
+							text: JSON.stringify(result.results, null, 2),
 							type: "text",
 						},
 					],
@@ -54,37 +37,143 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
 			},
 		);
 
-		// Dynamically add tools based on the user's login. In this case, I want to limit
-		// access to my Image Generation tool to just me
-		if (ALLOWED_USERNAMES.has(this.props.login)) {
-			this.server.tool(
-				"generateImage",
-				"Generate an image using the `flux-1-schnell` model. Works best with 8 steps.",
-				{
-					prompt: z
-						.string()
-						.describe("A text description of the image you want to generate."),
-					steps: z
-						.number()
-						.min(4)
-						.max(8)
-						.default(4)
-						.describe(
-							"The number of diffusion steps; higher values can improve quality but take longer. Must be between 4 and 8, inclusive.",
-						),
-				},
-				async ({ prompt, steps }) => {
-					const response = await this.env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
-						prompt,
-						steps,
-					});
+		this.server.tool(
+			"addPantryItem",
+			"Add an item to the pantry or update amount if it already exists",
+			{ 
+				name: z.string().describe("Name of the item, in English, and in singular form, e.g 'banana'"),
+				amount: z.number().int().positive().describe("Amount to add (must be positive)")
+			},
+			async ({ name, amount }) => {
+				try {
+					const existing = await this.env.DB.prepare(
+						"SELECT ItemID, ItemAmount FROM PantryItems WHERE ItemName = ?"
+					).bind(name.toLowerCase()).first();
 
+					if (existing) {
+						const currentAmount = existing.ItemAmount as number;
+						const newAmount = currentAmount + amount;
+						await this.env.DB.prepare(
+							"UPDATE PantryItems SET ItemAmount = ? WHERE ItemID = ?"
+						).bind(newAmount, existing.ItemID).run();
+						
+						return {
+							content: [
+								{
+									text: `Added item, updated amount: ${newAmount}`,
+									type: "text",
+								},
+							],
+						};
+					} else {
+						await this.env.DB.prepare(
+							"INSERT INTO PantryItems (ItemName, ItemAmount) VALUES (?, ?)"
+						).bind(name.toLowerCase(), amount).run();
+						
+						return {
+							content: [
+								{
+									text: `Added item, updated amount: ${amount}`,
+									type: "text",
+								},
+							],
+						};
+					}
+				} catch (error) {
+					// TODO actually return failure
 					return {
-						content: [{ data: response.image!, mimeType: "image/jpeg", type: "image" }],
+						content: [
+							{
+								text: `Error adding item: ${error}`,
+								type: "text",
+							},
+						],
 					};
-				},
-			);
-		}
+				}
+			},
+		);
+
+		this.server.tool(
+			"removePantryItem",
+			"Remove an item from the pantry or decrease amount if some remains",
+			{ 
+				name: z.string().describe("Name of the item, in English, and in singular form, e.g 'banana'"),
+				amount: z.number().int().positive().describe("Amount to add (must be positive)")
+			},
+			async ({ name, amount }) => {
+				try {
+					const existing = await this.env.DB.prepare(
+						"SELECT ItemID, ItemAmount FROM PantryItems WHERE ItemName = ?"
+					).bind(name.toLowerCase()).first();
+
+					if (!existing) {
+						// TODO actually return failure
+						return {
+							content: [
+								{
+									text: `Item not found: ${name}`,
+									type: "text",
+								},
+							],
+						};
+					}
+
+					const currentAmount = existing.ItemAmount as number;
+					
+					if (currentAmount < amount) {
+						return {
+						// TODO actually return failure
+							content: [
+								{
+									text: `Insufficient amount: ${name} has ${currentAmount}, requested to remove ${amount}`,
+									type: "text",
+								},
+							],
+						};
+					}
+
+					const newAmount = currentAmount - amount;
+
+					if (newAmount === 0) {
+						await this.env.DB.prepare(
+							"DELETE FROM PantryItems WHERE ItemID = ?"
+						).bind(existing.ItemID).run();
+
+						return {
+							content: [
+								{
+									text: `Removed item, updated amount: 0`,
+									type: "text",
+								},
+							],
+						};
+					} else {
+						await this.env.DB.prepare(
+							"UPDATE PantryItems SET ItemAmount = ? WHERE ItemID = ?"
+						).bind(newAmount, existing.ItemID).run();
+
+						return {
+							content: [
+								{
+									text: `Removed item, updated amount: ${newAmount}`,
+									type: "text",
+								},
+							],
+						};
+					}
+				} catch (error) {
+					return {
+						// TODO actually return failure
+						content: [
+							{
+								text: `Error removing item: ${error}`,
+								type: "text",
+							},
+						],
+					};
+				}
+			},
+		);
 	}
 }
 
