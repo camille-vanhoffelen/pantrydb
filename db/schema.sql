@@ -1,2 +1,2 @@
 DROP TABLE IF EXISTS PantryItems;
-CREATE TABLE IF NOT EXISTS PantryItems (ItemID INTEGER PRIMARY KEY, ItemName TEXT UNIQUE, ItemAmount INTEGER);
+CREATE TABLE IF NOT EXISTS PantryItems (ItemID INTEGER PRIMARY KEY, ItemName TEXT, ItemQuantity INTEGER, PackageType TEXT, PackageSize TEXT, UNIQUE(ItemName, PackageType, PackageSize));

@@ -1,8 +1,10 @@
 import OAuthProvider from "@cloudflare/workers-oauth-provider";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
-import { z } from "zod";
+import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { GitHubHandler } from "./github-handler";
+import { PantryItem, PantryItemPartial } from "./types";
+import { itemNameSchema, quantitySchema, packageTypeSchema, packageSizeSchema } from "./schemas";
 
 // Context from the auth process, encrypted & stored in the auth token
 // and provided to the DurableMCP as this.props
@@ -25,7 +27,7 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
 			"List all items in the pantry",
 			{},
 			async () => {
-				const result = await this.env.DB.prepare("SELECT ItemName, ItemAmount FROM PantryItems").all();
+				const result = await this.env.DB.prepare("SELECT ItemName, ItemQuantity, PackageType, PackageSize FROM PantryItems").all<PantryItem>();
 				return {
 					content: [
 						{
@@ -39,102 +41,92 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
 
 		this.server.tool(
 			"addPantryItem",
-			"Add an item to the pantry or update amount if it already exists",
+			"Add an item to the pantry or update quantity if it already exists. Always list pantry items prior to adding new ones in order to reuse correct names, package types, and package sizes if items already exist.",
 			{ 
-				name: z.string().describe("Name of the item, in English, and in singular form, e.g 'banana'"),
-				amount: z.number().int().positive().describe("Amount to add (must be positive)")
+				name: itemNameSchema,
+				quantity: quantitySchema.describe("Quantity to add (must be positive)"),
+				packageType: packageTypeSchema,
+				packageSize: packageSizeSchema,
 			},
-			async ({ name, amount }) => {
+			async ({ name, quantity, packageType, packageSize}: {
+				name: string;
+				quantity: number;
+				packageType?: string;
+				packageSize?: string;
+			}) => {
 				try {
 					const existing = await this.env.DB.prepare(
-						"SELECT ItemID, ItemAmount FROM PantryItems WHERE ItemName = ?"
-					).bind(name.toLowerCase()).first();
+						"SELECT ItemID, ItemQuantity FROM PantryItems WHERE ItemName = ? AND PackageType IS ? AND PackageSize IS ?"
+					).bind(name.toLowerCase(), packageType || null, packageSize || null).first<PantryItemPartial>();
 
 					if (existing) {
-						const currentAmount = existing.ItemAmount as number;
-						const newAmount = currentAmount + amount;
+						const currentQuantity: number = existing.ItemQuantity;
+						const newQuantity: number = currentQuantity + quantity;
 						await this.env.DB.prepare(
-							"UPDATE PantryItems SET ItemAmount = ? WHERE ItemID = ?"
-						).bind(newAmount, existing.ItemID).run();
+							"UPDATE PantryItems SET ItemQuantity = ? WHERE ItemID = ?"
+						).bind(newQuantity, existing.ItemID).run();
 						
 						return {
 							content: [
 								{
-									text: `Added item, updated amount: ${newAmount}`,
+									text: `Added item, updated quantity: ${newQuantity}`,
 									type: "text",
 								},
 							],
 						};
 					} else {
 						await this.env.DB.prepare(
-							"INSERT INTO PantryItems (ItemName, ItemAmount) VALUES (?, ?)"
-						).bind(name.toLowerCase(), amount).run();
+							"INSERT INTO PantryItems (ItemName, ItemQuantity, PackageType, PackageSize) VALUES (?, ?, ?, ?)"
+						).bind(name.toLowerCase(), quantity, packageType || null, packageSize || null).run();
 						
 						return {
 							content: [
 								{
-									text: `Added item, updated amount: ${amount}`,
+									text: `Added item, updated quantity: ${quantity}`,
 									type: "text",
 								},
 							],
 						};
 					}
 				} catch (error) {
-					// TODO actually return failure
-					return {
-						content: [
-							{
-								text: `Error adding item: ${error}`,
-								type: "text",
-							},
-						],
-					};
+					throw new McpError(ErrorCode.InternalError, `Failed to add item: ${error instanceof Error ? error.message : String(error)}`);
 				}
 			},
 		);
 
 		this.server.tool(
 			"removePantryItem",
-			"Remove an item from the pantry or decrease amount if some remains",
+			"Remove an item from the pantry or decrease quantity if some remains. Always list pantry items prior to removing them in order to use correct names, package types, and package sizes.",
 			{ 
-				name: z.string().describe("Name of the item, in English, and in singular form, e.g 'banana'"),
-				amount: z.number().int().positive().describe("Amount to add (must be positive)")
+				name: itemNameSchema,
+				quantity: quantitySchema.describe("Quantity to remove (must be positive)"),
+				packageType: packageTypeSchema,
+				packageSize: packageSizeSchema,
 			},
-			async ({ name, amount }) => {
+			async ({ name, quantity, packageType, packageSize }: {
+				name: string;
+				quantity: number;
+				packageType?: string;
+				packageSize?: string;
+			}) => {
 				try {
 					const existing = await this.env.DB.prepare(
-						"SELECT ItemID, ItemAmount FROM PantryItems WHERE ItemName = ?"
-					).bind(name.toLowerCase()).first();
+						"SELECT ItemID, ItemQuantity FROM PantryItems WHERE ItemName = ? AND PackageType IS ? AND PackageSize IS ?"
+					).bind(name.toLowerCase(), packageType || null, packageSize || null).first<PantryItemPartial>();
 
 					if (!existing) {
-						// TODO actually return failure
-						return {
-							content: [
-								{
-									text: `Item not found: ${name}`,
-									type: "text",
-								},
-							],
-						};
+						throw new McpError(ErrorCode.InvalidParams, `Item not found: ${name}`);
 					}
 
-					const currentAmount = existing.ItemAmount as number;
+					const currentQuantity: number = existing.ItemQuantity;
 					
-					if (currentAmount < amount) {
-						return {
-						// TODO actually return failure
-							content: [
-								{
-									text: `Insufficient amount: ${name} has ${currentAmount}, requested to remove ${amount}`,
-									type: "text",
-								},
-							],
-						};
+					if (currentQuantity < quantity) {
+						throw new McpError(ErrorCode.InvalidParams, `Insufficient quantity: ${name} has ${currentQuantity}, requested to remove ${quantity}`);
 					}
 
-					const newAmount = currentAmount - amount;
+					const newQuantity: number = currentQuantity - quantity;
 
-					if (newAmount === 0) {
+					if (newQuantity === 0) {
 						await this.env.DB.prepare(
 							"DELETE FROM PantryItems WHERE ItemID = ?"
 						).bind(existing.ItemID).run();
@@ -142,35 +134,27 @@ export class MyMCP extends McpAgent<Env, Record<string, never>, Props> {
 						return {
 							content: [
 								{
-									text: `Removed item, updated amount: 0`,
+									text: `Removed item, updated quantity: 0`,
 									type: "text",
 								},
 							],
 						};
 					} else {
 						await this.env.DB.prepare(
-							"UPDATE PantryItems SET ItemAmount = ? WHERE ItemID = ?"
-						).bind(newAmount, existing.ItemID).run();
+							"UPDATE PantryItems SET ItemQuantity = ? WHERE ItemID = ?"
+						).bind(newQuantity, existing.ItemID).run();
 
 						return {
 							content: [
 								{
-									text: `Removed item, updated amount: ${newAmount}`,
+									text: `Removed item, updated quantity: ${newQuantity}`,
 									type: "text",
 								},
 							],
 						};
 					}
 				} catch (error) {
-					return {
-						// TODO actually return failure
-						content: [
-							{
-								text: `Error removing item: ${error}`,
-								type: "text",
-							},
-						],
-					};
+					throw new McpError(ErrorCode.InternalError, `Failed to remove item: ${error instanceof Error ? error.message : String(error)}`);
 				}
 			},
 		);
