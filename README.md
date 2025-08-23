@@ -7,7 +7,7 @@ Remote MCP server to keep track of what's in your pantry.
 The server is remote so it can be accessed on the go (e.g on mobile).
 It supports a single user authenticated through GitHub OAuth.
 
-PantryDB is implemented with [CloudFlare's MCP & OAuth libraries](https://developers.cloudflare.com/agents/guides/remote-mcp-server/), and deployed on [CloudFlare Workers](https://developers.cloudflare.com/workers/).
+PantryDB uses [CloudFlare's MCP & OAuth libraries](https://developers.cloudflare.com/agents/guides/remote-mcp-server/), and deployed on [CloudFlare Workers](https://developers.cloudflare.com/workers/).
 
 ## 📋 Table of Contents
 
@@ -204,7 +204,7 @@ npx @modelcontextprotocol/inspector
 ## 😎 Credits
 
 * Pantry photo by <a href="https://unsplash.com/@anniespratt?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Annie Spratt</a> on <a href="https://unsplash.com/photos/clear-glass-jars-on-white-shelf-nLHnx2-_sK4?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
-* Cloudflare "Build a Remote MCP Server" [docs](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top)
+* Cloudflare "Build a Remote MCP Server" [docs](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top) & [template](https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/)
 * Cloudflare D1 [docs](https://developers.cloudflare.com/d1/get-started/#_top)
 
 
