@@ -1,158 +1,213 @@
+![Pantry photo](resources/pantry.jpg)
+
 # 🥫 PantryDB
 
-MCP server to keep track of what's in your pantry.
+Remote MCP server to keep track of what's in your pantry.
 
----
+The server is remote so it can be accessed on the go (e.g on mobile).
+It supports a single user authenticated through GitHub OAuth.
 
-`npx wrangler kv namespace create PANTRY_ITEMS`
+PantryDB is implemented with [CloudFlare's MCP & OAuth libraries](https://developers.cloudflare.com/agents/guides/remote-mcp-server/), and deployed on [CloudFlare Workers](https://developers.cloudflare.com/workers/).
 
----
+## 📋 Table of Contents
 
-# Model Context Protocol (MCP) Server + Github OAuth
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Local](#local)
+  - [Remote](#remote)
+- [🥫 Examples](#-examples)
+- [😎 Credits](#-credits)
+- [🤝 License](#-license)
 
-This is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) server that supports remote MCP connections, with Github OAuth built-in.
+## 🚀 Getting Started
 
-You can deploy it to your own Cloudflare account, and after you create your own Github OAuth client app, you'll have a fully functional remote MCP server that you can build off. Users will be able to connect to your MCP server by signing in with their GitHub account.
+### Prerequisites
 
-You can use this as a reference example for how to integrate other OAuth providers with an MCP server deployed to Cloudflare, using the [`workers-oauth-provider` library](https://github.com/cloudflare/workers-oauth-provider).
+- **Node.js** (v18 or higher) and **npm** - for running the project and managing dependencies
+- **OpenSSL** - for generating cookie encryption keys (`openssl rand -hex 32`)
+- **GitHub account** - for OAuth authentication setup
+- **Cloudflare account** - for Workers deployment and D1/KV services
 
-The MCP server (powered by [Cloudflare Workers](https://developers.cloudflare.com/workers/)): 
+### Installation 
 
-* Acts as OAuth _Server_ to your MCP clients
-* Acts as OAuth _Client_ to your _real_ OAuth server (in this case, GitHub)
+Install dependencies:
 
-## Getting Started
-
-Clone the repo directly & install dependencies: `npm install`.
-
-Alternatively, you can use the command line below to get the remote MCP Server created on your local machine:
 ```bash
-npm create cloudflare@latest -- my-mcp-server --template=cloudflare/ai/demos/remote-mcp-github-oauth
+npm install
 ```
 
-### For Production
-Create a new [GitHub OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app): 
-- For the Homepage URL, specify `https://mcp-github-oauth.<your-subdomain>.workers.dev`
-- For the Authorization callback URL, specify `https://mcp-github-oauth.<your-subdomain>.workers.dev/callback`
-- Note your Client ID and generate a Client secret. 
-- Set secrets via Wrangler
+Login to Wrangler:
+
 ```bash
-wrangler secret put GITHUB_CLIENT_ID
-wrangler secret put GITHUB_CLIENT_SECRET
-wrangler secret put COOKIE_ENCRYPTION_KEY # add any random string here e.g. openssl rand -hex 32
-wrangler secret put ALLOWED_GITHUB_USERNAME
-```
-#### Set up a KV namespace
-- Create the KV namespace: 
-`wrangler kv:namespace create "OAUTH_KV"`
-- Update the Wrangler file with the KV ID
-
-#### Deploy & Test
-Deploy the MCP server to make it available on your workers.dev domain 
-` wrangler deploy`
-
-Test the remote server using [Inspector](https://modelcontextprotocol.io/docs/tools/inspector): 
-
-```
-npx @modelcontextprotocol/inspector@latest
-```
-Enter `https://mcp-github-oauth.<your-subdomain>.workers.dev/sse` and hit connect. Once you go through the authentication flow, you'll see the Tools working: 
-
-<img width="640" alt="image" src="https://github.com/user-attachments/assets/7973f392-0a9d-4712-b679-6dd23f824287" />
-
-You now have a remote MCP server deployed! 
-
-### Access Control
-
-This MCP server uses GitHub OAuth for authentication. All authenticated GitHub users can access basic tools like "add" and "userInfoOctokit".
-
-The "generateImage" tool is restricted to specific GitHub users listed in the `ALLOWED_USERNAMES` configuration:
-
-```typescript
-// Add GitHub usernames for image generation access
-const ALLOWED_USERNAMES = new Set([
-  'yourusername',
-  'teammate1'
-]);
+npx wrangler login
 ```
 
-### Access the remote MCP server from Claude Desktop
+### Local
 
-Open Claude Desktop and navigate to Settings -> Developer -> Edit Config. This opens the configuration file that controls which MCP servers Claude can access.
+_Run PantryDB locally and access it with MCP clients on the same machine._
 
-Replace the content with the following configuration. Once you restart Claude Desktop, a browser window will open showing your OAuth login page. Complete the authentication flow to grant Claude access to your MCP server. After you grant access, the tools will become available for you to use. 
+#### GitHub OAuth
 
-```
-{
-  "mcpServers": {
-    "math": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://mcp-github-oauth.<your-subdomain>.workers.dev/sse"
-      ]
-    }
-  }
-}
-```
+Create a new OAuth App for local development.
 
-Once the Tools (under 🔨) show up in the interface, you can ask Claude to use them. For example: "Could you use the math tool to add 23 and 19?". Claude should invoke the tool and show the result generated by the MCP server.
-
-### For Local Development
-If you'd like to iterate and test your MCP server, you can do so in local development. This will require you to create another OAuth App on GitHub: 
-- For the Homepage URL, specify `http://localhost:8788`
-- For the Authorization callback URL, specify `http://localhost:8788/callback`
-- Note your Client ID and generate a Client secret. 
-- Create a `.dev.vars` file in your project root with: 
-```
-GITHUB_CLIENT_ID=your_development_github_client_id
-GITHUB_CLIENT_SECRET=your_development_github_client_secret
-```
-
-#### Develop & Test
-Run the server locally to make it available at `http://localhost:8788`
-`npx wrangler dev`
-
-To test the local server, enter `http://localhost:8788/sse` into Inspector and hit connect. Once you follow the prompts, you'll be able to "List Tools". 
-
-#### Using Claude and other MCP Clients
-
-TODO
+Navigate to [github.com/settings/developers](https://github.com/settings/developers) to create a new OAuth App with the following settings:
 
 ```
-NAME=PantryDB
-URL=https://pantrydb.<your-subdomain>.workers.dev/sse
+Application name: PantryDB (local)
+Homepage URL: http://localhost:8788
+Authorization callback URL: http://localhost:8788/callback
 ```
 
-When using Claude to connect to your remote MCP server, you may see some error messages. This is because Claude Desktop doesn't yet support remote MCP servers, so it sometimes gets confused. To verify whether the MCP server is connected, hover over the 🔨 icon in the bottom right corner of Claude's interface. You should see your tools available there.
+Note your Client ID and generate a Client secret. Add both to a `.dev.vars` file in the root of your project, which will be used to set secrets in local development:
 
-#### Using Cursor and other MCP Clients
+```bash
+touch .dev.vars
+echo 'GITHUB_CLIENT_ID="your-client-id"' >> .dev.vars
+echo 'GITHUB_CLIENT_SECRET="your-client-secret"' >> .dev.vars
+```
 
-To connect Cursor with your MCP server, choose `Type`: "Command" and in the `Command` field, combine the command and args fields into one (e.g. `npx mcp-remote https://<your-worker-name>.<your-subdomain>.workers.dev/sse`).
+Then, add the username of the only GitHub account which will be allowed to use your PantryDB:
 
-Note that while Cursor supports HTTP+SSE servers, it doesn't support authentication, so you still need to use `mcp-remote` (and to use a STDIO server, not an HTTP one).
+```bash
+echo 'ALLOWED_GITHUB_USERNAME="your-username"' >> .dev.vars
+```
 
-You can connect your MCP server to other MCP clients like Windsurf by opening the client's configuration file, adding the same JSON that was used for the Claude setup, and restarting the MCP client.
+#### Cookie Encryption
 
-## How does it work? 
+Set a cookie encryption key. Use any random string (e.g `openssl rand -hex 32`).
 
-#### OAuth Provider
-The OAuth Provider library serves as a complete OAuth 2.1 server implementation for Cloudflare Workers. It handles the complexities of the OAuth flow, including token issuance, validation, and management. In this project, it plays the dual role of:
+```bash
+echo 'COOKIE_ENCRYPTION_KEY="your-cookie-encryption-key"' >> .dev.vars
+```
 
-- Authenticating MCP clients that connect to your server
-- Managing the connection to GitHub's OAuth services
-- Securely storing tokens and authentication state in KV storage
+#### KV namespace
 
-#### Durable MCP
-Durable MCP extends the base MCP functionality with Cloudflare's Durable Objects, providing:
-- Persistent state management for your MCP server
-- Secure storage of authentication context between requests
-- Access to authenticated user information via `this.props`
-- Support for conditional tool availability based on user identity
+Create the server's OAuth KV namespace: 
 
-#### MCP Remote
-The MCP Remote library enables your server to expose tools that can be invoked by MCP clients like the Inspector. It:
-- Defines the protocol for communication between clients and your server
-- Provides a structured way to define tools
-- Handles serialization and deserialization of requests and responses
-- Maintains the Server-Sent Events (SSE) connection between clients and your server
+```bash
+npx wrangler kv:namespace create "OAUTH_KV"
+```
+
+Then, update the Wrangler file (`wrangler.jsonc`) with the KV ID.
+
+#### D1 Database
+
+Create and initialize local d1 database.
+
+```bash
+npx wrangler d1 create pantrydb
+npx wrangler d1 execute pantrydb --local --file=db/schema.sql
+```
+
+Then, update the Wrangler file (`wrangler.jsonc`) with the D1 database ID.
+
+#### Run
+
+Run the MCP server locally at `http://localhost:8788/sse`:
+
+```bash
+npx wrangler dev
+```
+
+#### Usage
+
+Then connect to your local PantryDB at `http://localhost:8788/sse` with:
+
+* [Claude Desktop](https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp) running on the same machine
+* [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector):
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+### Remote
+
+_Run PantryDB remote and access from any MCP client._
+
+#### GitHub OAuth
+
+Create a new OAuth App for the remote server:
+
+Navigate to [github.com/settings/developers](https://github.com/settings/developers) to create a new OAuth App with the following settings:
+
+```
+Application name: PantryDB (prod)
+Homepage URL: https://pantrydb.<your-subdomain>.workers.dev
+Authorization callback URL: https://pantrydb.<your-subdomain>.workers.dev/callback
+```
+
+Note your Client ID and generate a Client secret. Set secrets via Wrangler:
+
+```bash
+npx wrangler secret put GITHUB_CLIENT_ID
+npx wrangler secret put GITHUB_CLIENT_SECRET
+```
+
+Then, set the username of the only GitHub account which will be allowed to use your PantryDB:
+
+```bash
+npx wrangler secret put ALLOWED_GITHUB_USERNAME
+```
+
+#### Cookie Encryption
+
+Set a cookie encryption key. Use any random string (e.g `openssl rand -hex 32`).
+
+```bash
+npx wrangler secret put COOKIE_ENCRYPTION_KEY
+```
+
+#### KV namespace
+
+Create the server's OAuth KV namespace: 
+
+```bash
+npx wrangler kv:namespace create "OAUTH_KV"
+```
+
+Then, update the Wrangler file (`wrangler.jsonc`) with the KV ID.
+
+#### D1 Database
+
+Create and initialize remote d1 database.
+
+```bash
+npx wrangler d1 create pantrydb
+npx wrangler d1 execute pantrydb --remote --file=db/schema.sql
+```
+
+Then, update the Wrangler file (`wrangler.jsonc`) with the D1 database ID.
+
+#### Deploy
+
+Deploy the MCP server to make it available on your `workers.dev` domain:
+
+```bash
+npx wrangler deploy
+```
+
+#### Usage
+
+Then connect to your remote PantryDB at `https://pantrydb.<your-subdomain>.workers.dev/sse` with:
+
+* [Claude Desktop or Mobile](https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp)
+* any other [MCP client](https://modelcontextprotocol.io/docs/tutorials/use-remote-mcp-server)
+* [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector):
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+## 🥫 Examples
+
+## 😎 Credits
+
+* Pantry photo by <a href="https://unsplash.com/@anniespratt?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Annie Spratt</a> on <a href="https://unsplash.com/photos/clear-glass-jars-on-white-shelf-nLHnx2-_sK4?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+* Cloudflare "Build a Remote MCP Server" [docs](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top)
+* Cloudflare D1 [docs](https://developers.cloudflare.com/d1/get-started/#_top)
+
+
+## 🤝 License
+
+[MIT license](LICENSE)
