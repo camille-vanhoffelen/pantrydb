@@ -204,8 +204,12 @@ npx @modelcontextprotocol/inspector
 ## 😎 Credits
 
 * Pantry photo by <a href="https://unsplash.com/@anniespratt?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Annie Spratt</a> on <a href="https://unsplash.com/photos/clear-glass-jars-on-white-shelf-nLHnx2-_sK4?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
-* Cloudflare "Build a Remote MCP Server" [docs](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top) & [template](https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/)
-* Cloudflare D1 [docs](https://developers.cloudflare.com/d1/get-started/#_top)
+* Cloudflare "Build a Remote MCP Server" [examples](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top) & [template](https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/)
+* Cloudflare D1 [examples](https://developers.cloudflare.com/d1/get-started/#_top)
+
+Special thanks to:
+
+* [Raphael Van Hoffelen](https://github.com/dskart), OAuth mentor
 
 
 ## 🤝 License
