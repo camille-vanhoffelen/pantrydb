@@ -4,6 +4,8 @@
 
 Remote MCP server to keep track of what's in your pantry.
 
+Exposes a simple database to list, add, and remove pantry items.
+
 The server is remote so it can be accessed on the go (e.g on mobile).
 It supports a single user authenticated through GitHub OAuth.
 
