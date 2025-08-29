@@ -6,21 +6,36 @@ Remote MCP server to keep track of what's in your pantry.
 
 Exposes a simple database to list, add, and remove pantry items.
 
-The server is remote so it can be accessed on the go (e.g on mobile).
-It supports a single user authenticated through GitHub OAuth.
+The server is remote so that it can be accessed on the go (e.g on mobile).
+It supports a single user authenticated with GitHub OAuth.
 
 PantryDB uses [CloudFlare's MCP & OAuth libraries](https://developers.cloudflare.com/agents/guides/remote-mcp-server/), and deployed on [CloudFlare Workers](https://developers.cloudflare.com/workers/).
 
 ## 📋 Table of Contents
 
+- [🥫 Examples](#-examples)
 - [🚀 Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Local](#local)
   - [Remote](#remote)
-- [🥫 Examples](#-examples)
 - [😎 Credits](#-credits)
 - [🤝 License](#-license)
+
+## 🥫 Examples
+
+Ask for advice when shopping.
+
+![Hummus screenshot](resources/hummus.jpg)
+
+Scan your receipts to add to the pantry.
+
+![Honey screenshot](resources/honey.jpg)
+
+Leave a voice memo to let Claude know that you ate some chips.
+
+![Chips screenshot](resources/chips.jpg)
+
 
 ## 🚀 Getting Started
 
@@ -201,7 +216,6 @@ Then connect to your remote PantryDB at `https://pantrydb.<your-subdomain>.worke
 npx @modelcontextprotocol/inspector
 ```
 
-## 🥫 Examples
 
 ## 😎 Credits
 
