@@ -222,6 +222,7 @@ npx @modelcontextprotocol/inspector
 * Pantry photo by <a href="https://unsplash.com/@anniespratt?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Annie Spratt</a> on <a href="https://unsplash.com/photos/clear-glass-jars-on-white-shelf-nLHnx2-_sK4?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
 * Cloudflare "Build a Remote MCP Server" [examples](https://developers.cloudflare.com/agents/guides/remote-mcp-server/#_top) & [template](https://github.com/cloudflare/ai/blob/main/demos/remote-mcp-github-oauth/)
 * Cloudflare D1 [examples](https://developers.cloudflare.com/d1/get-started/#_top)
+* Receipt image from [CORD: A Consolidated Receipt Dataset for Post-OCR Parsing](https://github.com/clovaai/cord), by Park, Seunghyun; Shin, Seung; Lee, Bado; Lee, Junyeop; Surh, Jaeheung; Seo, Minjoon; Lee, Hwalsuk, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
 
 Special thanks to:
 
