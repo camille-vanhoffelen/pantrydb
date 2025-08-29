@@ -17,8 +17,13 @@ PantryDB uses [CloudFlare's MCP & OAuth libraries](https://developers.cloudflare
 - [🚀 Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Local](#local)
-  - [Remote](#remote)
+- [🚢 Deployment](#-deployment)
+    - [GitHub OAuth](#github-oauth)
+    - [Cookie Encryption](#cookie-encryption)
+    - [KV namespace](#kv-namespace)
+    - [D1 Database](#d1-database)
+    - [Deploy](#deploy)
+- [🔌 Usage](#-usage)
 - [😎 Credits](#-credits)
 - [🤝 License](#-license)
 
@@ -60,11 +65,14 @@ Login to Wrangler:
 npx wrangler login
 ```
 
-### Local
+## 🚢 Deployment
 
-_Run PantryDB locally and access it with MCP clients on the same machine._
+* local: _run PantryDB locally and access it with MCP clients on the same machine._
+* remote: _deploy PantryDB remotely and access from any MCP client._
 
-#### GitHub OAuth
+### GitHub OAuth
+
+**Local**
 
 Create a new OAuth App for local development.
 
@@ -90,59 +98,7 @@ Then, add the username of the only GitHub account which will be allowed to use y
 echo 'ALLOWED_GITHUB_USERNAME="your-username"' >> .dev.vars
 ```
 
-#### Cookie Encryption
-
-Set a cookie encryption key. Use any random string (e.g `openssl rand -hex 32`).
-
-```bash
-echo 'COOKIE_ENCRYPTION_KEY="your-cookie-encryption-key"' >> .dev.vars
-```
-
-#### KV namespace
-
-Create the server's OAuth KV namespace: 
-
-```bash
-npx wrangler kv:namespace create "OAUTH_KV"
-```
-
-Then, update the Wrangler file (`wrangler.jsonc`) with the KV ID.
-
-#### D1 Database
-
-Create and initialize local d1 database.
-
-```bash
-npx wrangler d1 create pantrydb
-npx wrangler d1 execute pantrydb --local --file=db/schema.sql
-```
-
-Then, update the Wrangler file (`wrangler.jsonc`) with the D1 database ID.
-
-#### Run
-
-Run the MCP server locally at `http://localhost:8788/sse`:
-
-```bash
-npx wrangler dev
-```
-
-#### Usage
-
-Then connect to your local PantryDB at `http://localhost:8788/sse` with:
-
-* [Claude Desktop](https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp) running on the same machine
-* [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector):
-
-```bash
-npx @modelcontextprotocol/inspector
-```
-
-### Remote
-
-_Run PantryDB remote and access from any MCP client._
-
-#### GitHub OAuth
+**Remote**
 
 Create a new OAuth App for the remote server:
 
@@ -167,9 +123,17 @@ Then, set the username of the only GitHub account which will be allowed to use y
 npx wrangler secret put ALLOWED_GITHUB_USERNAME
 ```
 
-#### Cookie Encryption
+### Cookie Encryption
 
-Set a cookie encryption key. Use any random string (e.g `openssl rand -hex 32`).
+Set a cookie encryption key. Use any random string (e.g `openssl rand -hex 32`). Then, set the key as secret:
+
+**Local**
+
+```bash
+echo 'COOKIE_ENCRYPTION_KEY="your-cookie-encryption-key"' >> .dev.vars
+```
+
+**Remote**
 
 ```bash
 npx wrangler secret put COOKIE_ENCRYPTION_KEY
@@ -185,18 +149,36 @@ npx wrangler kv:namespace create "OAUTH_KV"
 
 Then, update the Wrangler file (`wrangler.jsonc`) with the KV ID.
 
-#### D1 Database
+### D1 Database
 
-Create and initialize remote d1 database.
+Create the d1 database.
 
 ```bash
 npx wrangler d1 create pantrydb
+```
+
+Then initialise it.
+
+```bash
+# local
+npx wrangler d1 execute pantrydb --local --file=db/schema.sql
+# or remote
 npx wrangler d1 execute pantrydb --remote --file=db/schema.sql
 ```
 
-Then, update the Wrangler file (`wrangler.jsonc`) with the D1 database ID.
+Finally, update the Wrangler file (`wrangler.jsonc`) with the D1 database ID.
 
 #### Deploy
+
+**Local**
+
+Run the MCP server locally at `http://localhost:8788/sse`:
+
+```bash
+npx wrangler dev
+```
+
+**Remote**
 
 Deploy the MCP server to make it available on your `workers.dev` domain:
 
@@ -204,18 +186,17 @@ Deploy the MCP server to make it available on your `workers.dev` domain:
 npx wrangler deploy
 ```
 
-#### Usage
+## 🔌 Usage
 
-Then connect to your remote PantryDB at `https://pantrydb.<your-subdomain>.workers.dev/sse` with:
+Then connect to your local PantryDB at `http://localhost:8788/sse`, or your remote PantryDB at `https://pantrydb.<your-subdomain>.workers.dev/sse` with:
 
-* [Claude Desktop or Mobile](https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp)
+* [Claude Desktop & Mobile](https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp) with remote connectors
 * any other [MCP client](https://modelcontextprotocol.io/docs/tutorials/use-remote-mcp-server)
-* [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector):
+* [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector), useful for both local & remote testing:
 
 ```bash
 npx @modelcontextprotocol/inspector
 ```
-
 
 ## 😎 Credits
 
